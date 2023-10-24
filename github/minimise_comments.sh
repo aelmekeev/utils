@@ -12,8 +12,7 @@ function minimise_comments() {
   fi
 
   author_filter=$([[ -n "$author" ]] && echo "select(.node.author.login == \"$author\")" || echo ".")
-  # commit_filter="$(create_commit_filter)"
-  create_commit_filter
+  commit_filter=$([[ -n "$commit" ]] && create_commit_filter || echo ".")
 
   gh api graphql -F owner="$owner" -F name="$repo" -F pr_number="$pr_number" -f query='
     query($name: String!, $owner: String!, $pr_number: Int!) {
@@ -63,6 +62,7 @@ function set_defaults() {
   mutation="minimizeComment"
   pr_number=""
   author=""
+  commit=""
   owner="{owner}"
   repo="{repo}"
   work_done=false
@@ -98,8 +98,6 @@ function create_commit_filter() {
       echo "select(.node.createdAt < \"$date\")"
       return
     done
-
-  echo "."
 }
 
 # DESC: Exit script with the given message
@@ -131,7 +129,7 @@ EOF
 }
 
 function parse_params() {
-  while getopts ":hu:ra:c:" arg; do
+  while getopts ":hu:ra:o" arg; do
     case $arg in
     u)
       url="$OPTARG"
@@ -143,8 +141,8 @@ function parse_params() {
     a)
       author="$OPTARG"
       ;;
-    c)
-      commit="$OPTARG"
+    o)
+      commit="last"
       ;;
     h)
       script_usage && exit 0
